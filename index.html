@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GazeLab — Browser Eye Tracking (Local)</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- WebGazer (client-side gaze estimation) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/webgazer@2.1.2/dist/webgazer.min.js"></script>
+  <!-- NOTE: WebGazer runs fully in your browser. No video/data leaves the page. -->
+</head>
+<body>
+  <!-- ======================= README (quick start) ======================= -->
+  <section class="readme" role="doc-introduction" aria-label="How to use">
+    <h1>GazeLab 👀</h1>
+    <ol>
+      <li>Click <b>Start Camera</b> → allow permission. Your video never leaves your device.</li>
+      <li>Click <b>Calibrate</b> and look at the dots (5–9 points). Press <b>Space</b> to capture each point.</li>
+      <li>Toggle <b>Cursor</b> or <b>Heatmap</b>. Adjust smoothing, dot size, and heatmap decay.</li>
+      <li>Click <b>Start Recording</b> to log gaze at ~20 Hz, then <b>Export CSV</b>.</li>
+      <li>Keyboard: <code>C</code>=Calibrate, <code>R</code>=Record, <code>H</code>=Heatmap, <code>L</code>=Landmarks, <code>D</code>=Dark mode.</li>
+    </ol>
+    <p class="privacy">Privacy: 100% in-browser. No uploads; only libraries load from CDNs.</p>
+  </section>
+
+  <!-- ======================= HUD ======================= -->
+  <header id="hud" aria-live="polite">
+    <div><strong>FPS:</strong> <span id="hud-fps">0</span></div>
+    <div><strong>Confidence:</strong> <span id="hud-conf">0.00</span></div>
+    <div><strong>Mode:</strong> <span id="hud-mode">Idle</span></div>
+    <div><strong>Recording:</strong> <span id="hud-rec">● OFF</span></div>
+    <div id="lost" hidden>Tracking lost / Blink</div>
+  </header>
+
+  <main class="app">
+    <!-- ======================= Left Pane: Video + Overlays ======================= -->
+    <section class="left">
+      <div class="stage">
+        <!-- Mirrored user video preview -->
+        <video id="video" autoplay playsinline muted></video>
+
+        <!-- Overlays: gaze cursor + heatmap + (optional) landmarks -->
+        <canvas id="overlay"></canvas>
+        <canvas id="heatmap"></canvas>
+        <canvas id="landmarks" hidden></canvas>
+
+        <!-- Permission / error card -->
+        <div id="permit" class="card">
+          <h3>Camera permission</h3>
+          <p>This app needs your camera to estimate gaze. Nothing is uploaded.</p>
+          <button id="btn-start" class="primary">Start Camera</button>
+          <div id="perm-help" class="help" hidden>
+            If you denied access, use your browser’s site settings to allow camera, then click <b>Retry</b>.
+            <div class="row">
+              <button id="btn-retry">Retry</button>
+              <button id="btn-troubleshoot" class="link">Troubleshoot</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="note">Tip: keep your head relatively steady; good lighting helps.</footer>
+    </section>
+
+    <!-- ======================= Right Pane: Controls ======================= -->
+    <aside class="right">
+      <div class="panel">
+        <h2>Controls</h2>
+
+        <div class="row">
+          <label class="switch">
+            <input type="checkbox" id="toggle-landmarks" />
+            <span>Show landmarks</span> <kbd>L</kbd>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="toggle-cursor" checked />
+            <span>Cursor</span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="toggle-heatmap" />
+            <span>Heatmap</span> <kbd>H</kbd>
+          </label>
+        </div>
+
+        <div class="row sliders">
+          <label> Smoothing
+            <input type="range" id="smoothing" min="0" max="1" step="0.01" value="0.35" />
+          </label>
+          <label> Dot size
+            <input type="range" id="dot-size" min="2" max="40" step="1" value="12" />
+          </label>
+          <label> Heatmap decay
+            <input type="range" id="heat-decay" min="0.90" max="0.999" step="0.001" value="0.965" />
+          </label>
+        </div>
+
+        <div class="row">
+          <button id="btn-calibrate">Calibrate</button>
+          <button id="btn-calibrate-clear" class="secondary">Clear</button>
+        </div>
+
+        <div class="row">
+          <button id="btn-record">Start Recording</button>
+          <button id="btn-export" class="secondary">Export CSV</button>
+          <button id="btn-reset" class="ghost">Reset UI</button>
+        </div>
+
+        <div class="row">
+          <label class="switch">
+            <input type="checkbox" id="toggle-theme" />
+            <span>Dark mode</span> <kbd>D</kbd>
+          </label>
+        </div>
+      </div>
+
+      <!-- Calibration overlay (shown on demand) -->
+      <div id="calib" class="calib hidden" aria-hidden="true">
+        <div class="calib-instructions">
+          <h3>Calibration</h3>
+          <p>Look at each dot. Press <b>Space</b> to capture, then it moves to the next.</p>
+          <p>Points: <span id="calib-count">0</span>/<span id="calib-total">0</span></p>
+          <button id="calib-exit" class="ghost">Exit</button>
+        </div>
+        <div id="calib-dot" class="dot"></div>
+      </div>
+
+    </aside>
+  </main>
+
+  <script defer src="app.js"></script>
+</body>
+</html>
